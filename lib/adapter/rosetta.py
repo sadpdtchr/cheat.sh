@@ -3,36 +3,43 @@ Implementation of RosettaCode Adapter.
 
 Exports:
 
-    Rosetta(Adapter)
+    Rosetta(GitRepositoryAdapter)
 """
 
-import sys
+# pylint: disable=relative-import
+
 import os
 import glob
 import yaml
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# pylint: disable=wrong-import-position,wrong-import-order
-from globals import PATH_CHEAT_SHEETS, ROSETTA_PATH
-from adapter import Adapter             # pylint: disable=relative-import
-# pylint: enable=wrong-import-position,wrong-import-order
+from .git_adapter import GitRepositoryAdapter
+from .cheat_sheets import CheatSheets
 
-class Rosetta(Adapter):
+class Rosetta(GitRepositoryAdapter):
 
     """
     Adapter for RosettaCode
     """
 
-    __section_name = "rosetta"
     _adapter_name = "rosetta"
     _output_format = "code"
+    _local_repository_location = "RosettaCodeData"
+    _repository_url = "https://github.com/acmeism/RosettaCodeData"
+
+    __section_name = "rosetta"
+
+    def __init__(self):
+        GitRepositoryAdapter.__init__(self)
+        self._rosetta_code_name = self._load_rosetta_code_names()
 
     @staticmethod
     def _load_rosetta_code_names():
         answer = {}
-        for filename in glob.glob(os.path.join(PATH_CHEAT_SHEETS, '*/_info.yaml')):
+
+        lang_files_location = CheatSheets.local_repository_location(cheat_sheets_location=True)
+        for filename in glob.glob(os.path.join(lang_files_location, '*/_info.yaml')):
             text = open(filename, 'r').read()
-            data = yaml.load(text)
+            data = yaml.load(text, Loader=yaml.SafeLoader)
             if data is None:
                 continue
             lang = os.path.basename(os.path.dirname(filename))
@@ -49,9 +56,9 @@ class Rosetta(Adapter):
         lang = self._rosetta_code_name[query]
         answer = []
         if task:
-            glob_path = os.path.join(ROSETTA_PATH, 'Lang', lang, task, '*')
+            glob_path = os.path.join(self.local_repository_location(), 'Lang', lang, task, '*')
         else:
-            glob_path = os.path.join(ROSETTA_PATH, 'Lang', lang, '*')
+            glob_path = os.path.join(self.local_repository_location(), 'Lang', lang, '*')
         for filename in glob.glob(glob_path):
             taskname = os.path.basename(filename)
             answer.append(taskname)
@@ -88,7 +95,8 @@ class Rosetta(Adapter):
 
         lang_name = self._rosetta_code_name[lang]
 
-        tasks = sorted(glob.glob(os.path.join(ROSETTA_PATH, 'Lang', lang_name, task, '*')))
+        tasks = sorted(glob.glob(
+            os.path.join(self.local_repository_location(), 'Lang', lang_name, task, '*')))
         if not tasks:
             return ""
 
@@ -136,7 +144,3 @@ class Rosetta(Adapter):
 
     def is_found(self, _):
         return True
-
-    def __init__(self):
-        Adapter.__init__(self)
-        self._rosetta_code_name = self._load_rosetta_code_names()

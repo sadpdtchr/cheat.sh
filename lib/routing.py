@@ -18,6 +18,7 @@ import adapter.latenz
 import adapter.learnxiny
 import adapter.question
 import adapter.rosetta
+from config import CONFIG
 
 class Router(object):
 
@@ -29,26 +30,14 @@ class Router(object):
     `get_answer_dict()` return answer for the query.
     """
 
-    routing_table = [
-        ("^$", "search"),
-        ("^[^/]*/rosetta(/|$)", "rosetta"),
-        ("^:", "internal"),
-        ("/:list$", "internal"),
-        ("/$", "cheat.sheets dir"),
-        ("", "cheat.sheets"),
-        ("", "cheat"),
-        ("", "tldr"),
-        ("", "late.nz"),
-        ("", "fosdem"),
-        ("^[^/]*$", "unknown"),
-        ("", "learnxiny"),
-        ("^[a-z][a-z]-[a-z][a-z]$", "translation"),
-    ]
-
     def __init__(self):
 
         self._cached_topics_list = []
         self._cached_topic_type = {}
+
+        adapter_class = adapter.all_adapters(as_dict=True)
+
+        active_adapters = set(CONFIG['adapters.active'] + CONFIG['adapters.mandatory'])
 
         self._adapter = {
             "internal": adapter.internal.InternalPages(
@@ -57,23 +46,19 @@ class Router(object):
             "unknown": adapter.internal.UnknownPages(
                 get_topic_type=self.get_topic_type,
                 get_topics_list=self.get_topics_list),
-            "search": adapter.internal.Search(),
-            "tldr": adapter.cmd.Tldr(),
-            "cheat": adapter.cmd.Cheat(),
-            "fosdem": adapter.cmd.Fosdem(),
-            "translation": adapter.cmd.Translation(),
-            "rosetta": adapter.rosetta.Rosetta(),
-            "late.nz": adapter.latenz.Latenz(),
-            "question": adapter.question.Question(),
-            "cheat.sheets": adapter.cheat_sheets.CheatSheets(),
-            "cheat.sheets dir": adapter.cheat_sheets.CheatSheetsDir(),
-            "learnxiny": adapter.learnxiny.LearnXinY(),
         }
+
+        for by_name in active_adapters:
+            if by_name not in self._adapter:
+                self._adapter[by_name] = adapter_class[by_name]()
 
         self._topic_list = {
             key: obj.get_list()
             for key, obj in self._adapter.items()
         }
+
+        self.routing_table = CONFIG["routing.main"]
+        self.routing_table = CONFIG["routing.pre"] + self.routing_table + CONFIG["routing.post"]
 
     def get_topics_list(self, skip_dirs=False, skip_internal=False):
         """
@@ -83,11 +68,12 @@ class Router(object):
         if self._cached_topics_list:
             return self._cached_topics_list
 
-        sources_to_merge = ['tldr', 'cheat', 'cheat.sheets', 'learnxiny', 'rosetta']
-        if not skip_dirs:
-            sources_to_merge.append("cheat.sheets dir")
-        if not skip_internal:
-            sources_to_merge.append("internal")
+        skip = ['fosdem']
+        if skip_dirs:
+            skip.append("cheat.sheets dir")
+        if skip_internal:
+            skip.append("internal")
+        sources_to_merge = [x for x in self._adapter if x not in skip]
 
         answer = {}
         for key in sources_to_merge:
@@ -103,7 +89,6 @@ class Router(object):
         """
 
         def __get_topic_type(topic):
-
             for regexp, route in self.routing_table:
                 if re.search(regexp, topic):
                     if route in self._adapter:
@@ -111,18 +96,17 @@ class Router(object):
                             return route
                     else:
                         return route
-            return 'question'
+            return CONFIG["routing.default"]
 
         if topic not in self._cached_topic_type:
             self._cached_topic_type[topic] = __get_topic_type(topic)
         return self._cached_topic_type[topic]
 
-    def _get_page_dict(self, query, request_options=None):
+    def _get_page_dict(self, query, topic_type, request_options=None):
         """
         Return answer_dict for the `query`.
         """
 
-        topic_type = self.get_topic_type(query)
         return self._adapter[topic_type]\
                .get_page_dict(query, request_options=request_options)
 
@@ -154,7 +138,7 @@ class Router(object):
                     'format': 'text+code',
                     }
 
-            answer = self._get_page_dict(topic, request_options=request_options)
+            answer = self._get_page_dict(topic, topic_type, request_options=request_options)
             cache.put('q:' + topic, answer)
             return answer
 
@@ -168,7 +152,10 @@ class Router(object):
             if answer:
                 return answer
 
-        answer = self._get_page_dict(topic, request_options=request_options)
+        answer = self._get_page_dict(topic, topic_type, request_options=request_options)
+        if isinstance(answer, dict):
+            if "cache" in answer:
+                cache_needed = answer["cache"]
 
         if cache_needed and answer:
             cache.put(topic, answer)

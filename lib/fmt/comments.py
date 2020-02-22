@@ -14,30 +14,28 @@ Exported functions:
 
     beautify(text, lang, options)
     code_blocks(text)
+
+Configuration parameters:
 """
+
+# pylint: disable=wrong-import-position,wrong-import-order
+
 from __future__ import print_function
 
 from gevent.monkey import patch_all
 from gevent.subprocess import Popen
-patch_all()
 
-# pylint: disable=wrong-import-position,wrong-import-order
 import sys
 import os
 import textwrap
 import hashlib
 import re
-
 from itertools import groupby, chain
 from tempfile import NamedTemporaryFile
 
-import cache
-
-MYDIR = os.path.abspath(os.path.join(__file__, '..', '..'))
-sys.path.append("%s/lib/" % MYDIR)
+from config import CONFIG
 from languages_data import VIM_NAME
-from globals import PATH_VIM_ENVIRONMENT
-# pylint: enable=wrong-import-position,wrong-import-order
+import cache
 
 FNULL = open(os.devnull, 'w')
 TEXT = 0
@@ -108,8 +106,6 @@ def _line_type(line):
         return CODE
     return TEXT
 
-
-
 def _classify_lines(lines):
     line_types = [_line_type(line) for line in lines]
 
@@ -153,7 +149,7 @@ def _unindent_code(line, shift=0):
         return ' ' + line
 
     if shift > 0 and line.startswith(' '*shift):
-            return line[shift:]
+        return line[shift:]
 
     return line
 
@@ -164,7 +160,7 @@ def _wrap_lines(lines_classes, unindent_code=False):
     """
 
     result = []
-    for line_type,line_content in lines_classes:
+    for line_type, line_content in lines_classes:
         if line_type == CODE:
 
             shift = 3 if unindent_code else -1
@@ -193,11 +189,14 @@ def _run_vim_script(script_lines, text_lines):
     textfile.file.close()
 
     my_env = os.environ.copy()
-    my_env['HOME'] = PATH_VIM_ENVIRONMENT
+    my_env['HOME'] = CONFIG["path.internal.vim"]
 
     cmd = ["script", "-q", "-c",
            "vim -S %s %s" % (script_vim.name, textfile.name)]
-    Popen(cmd, shell=False, stdout=FNULL, stderr=FNULL, env=my_env).communicate()
+
+    Popen(cmd, shell=False,
+          stdin=open(os.devnull, 'r'),
+          stdout=FNULL, stderr=FNULL, env=my_env).communicate()
 
     return open(textfile.name, "r").read()
 
@@ -234,7 +233,6 @@ def _beautify(text, filetype, add_comments=False, remove_text=False):
     # We shift the code if and only if we either convert the text into comments
     # or remove the text completely. Otherwise the code has to remain aligned
     unindent_code = add_comments or remove_text
-    print(unindent_code)
 
     lines = [x.rstrip('\n') for x in text.splitlines()]
     lines = _cleanup_lines(lines)
@@ -263,6 +261,8 @@ def code_blocks(text, wrap_lines=False, unindent_code=False):
     Split `text` into blocks of text and code.
     Return list of tuples TYPE, TEXT
     """
+    text = text.encode('utf-8')
+
     lines = [x.rstrip('\n') for x in text.splitlines()]
     lines_classes = zip(_classify_lines(lines), lines)
 
@@ -296,7 +296,14 @@ def beautify(text, lang, options):
         # if mode is unknown, just don't transform the text at all
         return text
 
+    text = text.encode('utf-8')
     digest = "t:%s:%s:%s" % (hashlib.md5(text).hexdigest(), lang, mode)
+
+    # temporary added line that removes invalid cache entries
+    # that used wrong commenting methods
+    if lang in ["git", "django", "flask", "cmake"]:
+        cache.delete(digest)
+
     answer = cache.get(digest)
     if answer:
         return answer

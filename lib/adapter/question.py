@@ -1,21 +1,37 @@
+"""
+Configuration parameters:
+
+    path.internal.bin.upstream
+"""
+
+# pylint: disable=relative-import,wrong-import-position,wrong-import-order
+
+from __future__ import print_function
+
 from gevent.monkey import patch_all
 from gevent.subprocess import Popen, PIPE
-patch_all()
 
-import sys
 import os
 import re
 
 from polyglot.detect import Detector
 from polyglot.detect.base import UnknownLanguage
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from globals import MYDIR
-
-from adapter import Adapter
+from config import CONFIG
 from languages_data import SO_NAME
+from .upstream import UpstreamAdapter
 
-class Question(Adapter):
+class Question(UpstreamAdapter):
+
+    """
+    Answer to a programming language question, using Stackoverflow
+    as the main data source. Heavy lifting is done by an external
+    program `CONFIG["path.internal.bin.upstream"]`.
+
+    If the program is not found, fallback to the superclass `UpstreamAdapter`,
+    which queries the upstream server (by default https://cheat.sh/)
+    for the answer
+    """
 
     _adapter_name = "question"
     _output_format = "text+code"
@@ -26,6 +42,13 @@ class Question(Adapter):
         Find answer for the `topic` question.
         """
 
+        if not os.path.exists(CONFIG["path.internal.bin.upstream"]):
+            # if the upstream program is not found, use normal upstream adapter
+            self._output_format = "ansi"
+            return UpstreamAdapter._get_page(self, topic, request_options=request_options)
+
+        topic = topic.replace('+', ' ')
+
         # if there is a language name in the section name,
         # cut it off (de:python => python)
         if '/' in topic:
@@ -34,7 +57,6 @@ class Question(Adapter):
                 _, section_name = section_name.split(':', 1)
             section_name = SO_NAME.get(section_name, section_name)
             topic = "%s/%s" % (section_name, topic)
-
 
         # some clients send queries with - instead of + so we have to rewrite them to
         topic = re.sub(r"(?<!-)-", ' ', topic)
@@ -51,7 +73,8 @@ class Question(Adapter):
             query_text = re.sub('/[0-9]+$', '', query_text)
             detector = Detector(query_text)
             supposed_lang = detector.languages[0].code
-            if len(topic_words) > 2 or supposed_lang in ['az', 'ru', 'uk', 'de', 'fr', 'es', 'it', 'nl']:
+            if len(topic_words) > 2 \
+                or supposed_lang in ['az', 'ru', 'uk', 'de', 'fr', 'es', 'it', 'nl']:
                 lang = supposed_lang
             if supposed_lang.startswith('zh_') or supposed_lang == 'zh':
                 lang = 'zh'
@@ -68,8 +91,8 @@ class Question(Adapter):
         else:
             topic = [topic]
 
-        cmd = [os.path.join(MYDIR, "bin/get-answer-for-question")] + topic
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        cmd = [CONFIG["path.internal.bin.upstream"]] + topic
+        proc = Popen(cmd, stdin=open(os.devnull, "r"), stdout=PIPE, stderr=PIPE)
         answer = proc.communicate()[0].decode('utf-8')
         return answer
 

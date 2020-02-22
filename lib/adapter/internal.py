@@ -1,13 +1,18 @@
+"""
+Configuration parameters:
+
+    frontend.styles
+    path.internal.pages
+"""
+
 import sys
 import os
-import glob
 import collections
 
 from fuzzywuzzy import process, fuzz
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from globals import MYDIR, COLOR_STYLES
-from adapter import Adapter
+from config import CONFIG
+from .adapter import Adapter
 from fmt.internal import colorize_internal
 
 _INTERNAL_TOPICS = [
@@ -27,7 +32,6 @@ _INTERNAL_TOPICS = [
     ":styles-demo",
     ":vim",
     ":zsh",
-    ":share",
     ]
 
 _COLORIZED_INTERNAL_TOPICS = [
@@ -80,11 +84,11 @@ class InternalPages(Adapter):
 
         answer = ""
         if topic == ':styles':
-            answer = "\n".join(COLOR_STYLES) + "\n"
+            answer = "\n".join(CONFIG["frontend.styles"]) + "\n"
         elif topic == ":stat":
             answer = self._get_stat()+"\n"
         elif topic in _INTERNAL_TOPICS:
-            answer = open(os.path.join(MYDIR, "share", topic[1:]+".txt"), "r").read()
+            answer = open(os.path.join(CONFIG["path.internal.pages"], topic[1:]+".txt"), "r").read()
             if topic in _COLORIZED_INTERNAL_TOPICS:
                 answer = colorize_internal(answer)
 
@@ -135,5 +139,5 @@ class Search(Adapter):
     def get_list(prefix=None):
         return []
 
-    def is_found(topic):
-        return True
+    def is_found(self, topic):
+        return False

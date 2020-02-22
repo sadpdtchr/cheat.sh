@@ -1,17 +1,32 @@
+"""
+Cache implementation.
+Currently only two types of cache are allowed:
+    * "none"    cache switched off
+    * "redis"   use redis for cache
+
+Configuration parameters:
+
+    cache.type = redis | none
+    cache.redis.db
+    cache.redis.host
+    cache.redis.port
+"""
+
 import os
 import json
-import redis
-from globals import REDISHOST
+from config import CONFIG
 
-if os.environ.get('REDIS_HOST', '').lower() != 'none':
-    _REDIS = redis.StrictRedis(host=REDISHOST, port=6379, db=0)
-else:
-    _REDIS = None
+_REDIS = None
+if CONFIG['cache.type'] == 'redis':
+    import redis
+    _REDIS = redis.StrictRedis(
+        host=CONFIG['cache.redis.host'],
+        port=CONFIG['cache.redis.port'],
+        db=CONFIG['cache.redis.db'])
 
-if os.environ.get('REDIS_PREFIX', ''):
-    _REDIS_PREFIX = os.environ.get('REDIS_PREFIX', '') + ':'
-else:
-    _REDIS_PREFIX = ''
+_REDIS_PREFIX = ''
+if CONFIG.get("cache.redis.prefix", ""):
+    _REDIS_PREFIX = CONFIG["cache.redis.prefix"] + ":"
 
 def put(key, value):
     """
@@ -21,7 +36,7 @@ def put(key, value):
     if _REDIS_PREFIX:
         key = _REDIS_PREFIX + key
 
-    if _REDIS:
+    if CONFIG["cache.type"] == "redis" and _REDIS:
         if isinstance(value, (dict, list)):
             value = json.dumps(value)
 
@@ -35,11 +50,24 @@ def get(key):
     if _REDIS_PREFIX:
         key = _REDIS_PREFIX + key
 
-    if _REDIS:
+    if CONFIG["cache.type"] == "redis" and _REDIS:
         value = _REDIS.get(key)
         try:
             value = json.loads(value)
         except (ValueError, TypeError):
             pass
         return value
+    return None
+
+def delete(key):
+    """
+    Remove `key` from the database
+    """
+
+    if _REDIS:
+        if _REDIS_PREFIX:
+            key = _REDIS_PREFIX + key
+
+        _REDIS.delete(key)
+
     return None

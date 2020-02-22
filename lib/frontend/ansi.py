@@ -16,6 +16,10 @@ Format:
         'answer':       '...',
         'format':       'ansi|code|markdown|text...',
     }
+
+Configuration parameters:
+
+    frontend.styles
 """
 
 import os
@@ -27,7 +31,7 @@ from pygments import highlight as pygments_highlight
 from pygments.formatters import Terminal256Formatter        # pylint: disable=no-name-in-module
                                                             # pylint: disable=wrong-import-position
 sys.path.append(os.path.abspath(os.path.join(__file__, '..')))
-from globals import COLOR_STYLES
+from config import CONFIG
 import languages_data                                       # pylint: enable=wrong-import-position
 
 import fmt.internal
@@ -90,8 +94,8 @@ def _colorize_ansi_answer(topic, answer, color_style,       # pylint: disable=to
 def _visualize(answers, request_options, search_mode=False):
 
     highlight = not bool(request_options and request_options.get('no-terminal'))
-    color_style = request_options.get('style', '')
-    if color_style not in COLOR_STYLES:
+    color_style = (request_options or {}).get('style', '')
+    if color_style not in CONFIG['frontend.styles']:
         color_style = ''
 
     found = True

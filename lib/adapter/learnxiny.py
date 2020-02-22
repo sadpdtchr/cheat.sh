@@ -1,13 +1,66 @@
 """
 Adapters for the cheat sheets from the Learn X in Y project
-"""
-from __future__ import print_function
 
+Configuration parameters:
+
+    log.level
+"""
+
+# pylint: disable=relative-import
+
+from __future__ import print_function
 import os
 import re
-from globals import PATH_LEARNXINY
+from config import CONFIG
+from .git_adapter import GitRepositoryAdapter
 
-from adapter import Adapter
+class LearnXinY(GitRepositoryAdapter):
+
+    """
+    Adapter for the LearnXinY project
+    """
+
+    _adapter_name = 'learnxiny'
+    _output_format = 'code'
+    _cache_needed = True
+    _repository_url = "https://github.com/adambard/learnxinyminutes-docs"
+
+    def __init__(self):
+        self.adapters = _ADAPTERS
+        GitRepositoryAdapter.__init__(self)
+
+    def _get_page(self, topic, request_options=None):
+        """
+        Return cheat sheet for `topic`
+        or empty string if nothing found
+        """
+        lang, topic = topic.split('/', 1)
+        if lang not in self.adapters:
+            return ''
+        return self.adapters[lang].get_page(topic)
+
+    def _get_list(self, prefix=None):
+        """
+        Return list of all learnxiny topics
+        """
+        answer = []
+        for language_adapter in self.adapters.values():
+            answer += language_adapter.get_list(prefix=True)
+        return answer
+
+    def is_found(self, topic):
+        """
+        Return whether `topic` is a valid learnxiny topic
+        """
+
+        if '/' not in topic:
+            return False
+
+        lang, topic = topic.split('/', 1)
+        if lang not in self.adapters:
+            return False
+
+        return self.adapters[lang].is_valid(topic)
 
 class LearnXYAdapter(object):
 
@@ -15,7 +68,7 @@ class LearnXYAdapter(object):
     Parent class of all languages adapters
     """
 
-    _learn_xy_path = PATH_LEARNXINY
+    _learn_xy_path = LearnXinY.local_repository_location()
     _replace_with = {}
     _filename = ''
     prefix = ''
@@ -32,7 +85,8 @@ class LearnXYAdapter(object):
         if "Comments" in self._topics_list:
             self._topics_list = [x for x in self._topics_list if x != "Comments"] + ["Comments"]
         self._topics_list += [":learn", ":list"]
-        print(self.prefix, self._topics_list)
+        if self._whole_cheatsheet and CONFIG.get("log.level") >= 5:
+            print(self.prefix, self._topics_list)
 
     def _is_block_separator(self, before, now, after):
         if (re.match(r'////////*', before)
@@ -62,6 +116,11 @@ class LearnXYAdapter(object):
     def _read_cheatsheet(self):
         filename = os.path.join(self._learn_xy_path, self._filename)
 
+        # if cheat sheets are not there (e.g. were not yet fetched),
+        # just skip it
+        if not os.path.exists(filename):
+            return None
+
         with open(filename) as f_cheat_sheet:
             code_mode = False
             answer = []
@@ -82,6 +141,9 @@ class LearnXYAdapter(object):
             return []
 
         lines = self._whole_cheatsheet
+        if lines is None:
+            return []
+
         answer = []
 
         block = []
@@ -790,46 +852,28 @@ class LearnVisualBasicAdapter(LearnXYAdapter):
     _filename = "visualbasic.html.markdown"
     _splitted = False
 
+class LearnCMakeAdapter(LearnXYAdapter):
+    "Learn CMake in Y Minutes"
+    prefix = "cmake"
+    _filename = "cmake.html.markdown"
+    _splitted = False
+
+class LearnNimAdapter(LearnXYAdapter):
+    "Learn Nim in Y Minutes"
+    prefix = "nim"
+    _filename = "nim.html.markdown"
+    _splitted = False
+
+class LearnGitAdapter(LearnXYAdapter):
+    "Learn Git in Y Minutes"
+    prefix = "git"
+    _filename = "git.html.markdown"
+    _splitted = False
+
+class LearnLatexAdapter(LearnXYAdapter):
+    "Learn Nim in Y Minutes"
+    prefix = "latex"
+    _filename = "latex.html.markdown"
+    _splitted = False
+
 _ADAPTERS = {cls.prefix: cls() for cls in vars()['LearnXYAdapter'].__subclasses__()}
-
-class LearnXinY(Adapter):
-
-    _output_format = 'code'
-    _cache_needed = True
-
-    def __init__(self):
-        self.adapters = _ADAPTERS
-        Adapter.__init__(self)
-
-    def _get_page(self, topic, request_options=None):
-        """
-        Return cheat sheet for `topic`
-        or empty string if nothing found
-        """
-        lang, topic = topic.split('/', 1)
-        if lang not in self.adapters:
-            return ''
-        return self.adapters[lang].get_page(topic)
-
-    def _get_list(self, prefix=None):
-        """
-        Return list of all learnxiny topics
-        """
-        answer = []
-        for language_adapter in self.adapters.values():
-            answer += language_adapter.get_list(prefix=True)
-        return answer
-
-    def is_found(self, topic):
-        """
-        Return whether `topic` is a valid learnxiny topic
-        """
-
-        if '/' not in topic:
-            return False
-
-        lang, topic = topic.split('/', 1)
-        if lang not in self.adapters:
-            return False
-
-        return self.adapters[lang].is_valid(topic)

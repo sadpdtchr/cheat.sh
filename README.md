@@ -295,7 +295,7 @@ Type `help` for other internal `cht.sh` commands.
 ```
 
 The `cht.sh` client has its configuration file which is located at `~/.cht.sh/cht.sh.conf`
-(location of the file can be overriden by the environment variable `CHTSH_CONF`).
+(location of the file can be overridden by the environment variable `CHTSH_CONF`).
 Use it to specify query options that you would use with each query.
 For example, to switch syntax highlighting off create the file with the following
 content:
@@ -446,7 +446,7 @@ scoop install cht
 
 ### Docker
 
-Currently the easiest way to get a self-hosted instance running is by using the docker-compose.yml file provided in the extra/docker folder.
+Currently, the easiest way to get a self-hosted instance running is by using the docker-compose.yml file provided in the extra/docker folder.
 This pulls down the latest image with baked in cheatsheets and starts the app and a Redis instance to back it, making the service available on port 8002 of the local host. This is currently an early implementation and should probably not be used for anything outside of internal/dev/personal use right now.
 
 ## Editors integration
@@ -478,17 +478,17 @@ and press `<leader>KE`: explanation for the warning will be opened in a new buff
 
 Features supported by cheat.sh plugins for different editors:
 
-|Feature            |Emacs|Sublime|Vim|VSCode|IDEA|
-|-------------------|-----|-------|---|------|----|
-|Command queries    |✓    |✓      |✓  |✓     |✓   |
-|Queries from buffer|     |       |✓  |✓     |    |
-|Toggle comments    |     |       |✓  |      |✓   |
-|Prev/next answer   |     |       |✓  |      |✓   |
-|Multiple answers   |     |✓      |   |      |✓   |
-|Warnings as queries|     |       |✓  |      |    |
-|Queries history    |     |       |✓  |✓     |    |
-|Session id         |     |       |✓  |      |    |
-|Configurable server|✓    |       |✓  |✓     |    |
+|Feature            |Emacs|Sublime|Vim|VSCode|IDEA|QtCreator|
+|-------------------|-----|-------|---|------|----|---------|
+|Command queries    |✓    |✓      |✓  |✓     |✓   |✓        |
+|Queries from buffer|     |       |✓  |✓     |    |✓        |
+|Toggle comments    |     |       |✓  |✓     |✓   |✓        |
+|Prev/next answer   |     |       |✓  |✓     |✓   |         |
+|Multiple answers   |     |✓      |   |      |✓   |         |
+|Warnings as queries|     |       |✓  |      |    |         |
+|Queries history    |     |       |✓  |✓     |    |         |
+|Session id         |     |       |✓  |      |    |         |
+|Configurable server|✓    |       |✓  |✓     |    |✓        |
 
 ### Vim
 
@@ -592,6 +592,25 @@ Usage:
 [![idea-cheatsh-plugin](https://cheat.sh/files/idea-demo.gif)](https://github.com/szymonprz/idea-cheatsh-plugin)
 
 *(GIF courtesy: Szymon Przebierowski, @szymonprz)*
+
+### QtCreator
+
+* [cheatsh-qtcreator](https://github.com/pozemka/cheatsh-qtcreator)
+
+Current features:
+
+*    search word under cursor
+*    search selected
+*    query search
+*    disable comments
+*    paste answer (?TQ version)
+*    custom server URL
+*    custom search context (default is cpp)
+*    hotkeys and menu
+
+[![cheatsh-qtcreator](https://user-images.githubusercontent.com/1259724/73876361-ecce5d00-4867-11ea-9f75-c5b127a9739c.gif)](https://github.com/pozemka/cheatsh-qtcreator)
+
+*(GIF courtesy: Pozemka, @pozemka)*
 
 ## Special pages
 
@@ -698,7 +717,7 @@ Some languages has the one-liners-cheat sheet, `1line`:
 
 ![cheat.sh usage](http://cheat.sh/files/supported-languages-c++.png)
 
-At the moment, cheat.sh covers the 57 following programming languages (alphabetically sorted):
+At the moment, cheat.sh covers the 58 following programming languages (alphabetically sorted):
 
 |Prefix     |Language  |Basics|One-liners|Weirdness|StackOverflow|
 |-----------|----------|------|----------|---------|-------------|
@@ -735,9 +754,11 @@ At the moment, cheat.sh covers the 57 following programming languages (alphabeti
 |`js/`      |JavaScript|✓     |✓         |✓        |✓            |
 |`julia/`   |Julia     |✓     |          |         |✓            |
 |`kotlin/`  |Kotlin    |✓     |          |         |✓            |
+|`latex/`   |LaTeX     |✓     |          |         |✓            |
 |`lisp/`    |Lisp      |✓     |          |         |✓            |
 |`lua/`     |Lua       |✓     |          |         |✓            |
 |`matlab/`  |MATLAB    |✓     |          |         |✓            |
+|`nim/`     |Nim       |✓     |          |         |✓            |
 |`ocaml/`   |OCaml     |✓     |          |         |✓            |
 |`octave/`  |Octave    |✓     |          |         |✓            |
 |`perl/`    |Perl      |✓     |✓         |         |✓            |
@@ -760,6 +781,16 @@ At the moment, cheat.sh covers the 57 following programming languages (alphabeti
 |`vb/`      |VisualBasic|✓    |          |         |✓            |
 |`vbnet/`   |VB.Net    |✓     |          |         |✓            |
 
+And several other topics, that are though related to programming,
+are not programming languages:
+
+|Prefix     |Topic     |Basics|StackOverflow|
+|-----------|----------|------|-------------|
+|`cmake/`   |CMake     |✓     |✓            |
+|`django/`  |Django    |      |✓            |
+|`flask/`   |Flask     |      |✓            |
+|`git/`     |Git       |✓     |✓            |
+
 ## Cheat sheets sources
 
 Instead of creating yet another mediocre cheat sheet repository,
@@ -775,12 +806,12 @@ all over the world
 
 |Cheat sheets           |Repository                                            | Users | Creation Date |
 |-----------------------|------------------------------------------------------|------------|---------------|
-|UNIX/Linux, programming|[cheat.sheets](https://github.com/chubin/cheat.sheets)| 34/192       | May 1, 2017   |
-|UNIX/Linux commands    |[tldr-pages/tldr](https://github.com/tldr-pages/tldr) | 717/22130  | Dec 8, 2013   |
-|UNIX/Linux commands    |[chrisallenlane/cheat](https://github.com/chrisallenlane/cheat)|127/5010|Jul 28, 2013|
-|Programming languages  |[adambard/learnxinyminutes-docs](https://github.com/adambard/learnxinyminutes-docs)|1218/6068|Jun 23, 2013|
-|Go                     |[a8m/go-lang-cheat-sheet](https://github.com/a8m/go-lang-cheat-sheet)|32/3876|Feb 9, 2014|
-|Perl                   |[pkrumnis/perl1line.txt](https://github.com/pkrumins/perl1line.txt)|5/187|Nov 4, 2011|
+|UNIX/Linux, programming|[cheat.sheets](https://github.com/chubin/cheat.sheets)| 38/223       | May 1, 2017   |
+|UNIX/Linux commands    |[tldr-pages/tldr](https://github.com/tldr-pages/tldr) | 760/23158  | Dec 8, 2013   |
+|UNIX/Linux commands    |[chrisallenlane/cheat](https://github.com/chrisallenlane/cheat)|131/5240|Jul 28, 2013|
+|Programming languages  |[adambard/learnxinyminutes-docs](https://github.com/adambard/learnxinyminutes-docs)|1246/6748|Jun 23, 2013|
+|Go                     |[a8m/go-lang-cheat-sheet](https://github.com/a8m/go-lang-cheat-sheet)|31/4039|Feb 9, 2014|
+|Perl                   |[pkrumnis/perl1line.txt](https://github.com/pkrumins/perl1line.txt)|5/190|Nov 4, 2011|
 |Programming languages  |[StackOverflow](https://stackoverflow.com)|9M |Sep 15, 2008|
 
 Pie diagram reflecting cheat sheets sources distribution (by number of cheat sheets on cheat.sh originating from a repository):

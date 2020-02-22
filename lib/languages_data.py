@@ -31,6 +31,7 @@ LEXER = {
     "forth"     : pygments.lexers.ForthLexer,
     "fortran"   : pygments.lexers.FortranLexer,
     "fsharp"    : pygments.lexers.FSharpLexer,
+    "git"       : pygments.lexers.BashLexer,
     "go"        : pygments.lexers.GoLexer,
     "groovy"    : pygments.lexers.GroovyLexer,
     "haskell"   : pygments.lexers.HaskellLexer,
@@ -38,11 +39,13 @@ LEXER = {
     "js"        : pygments.lexers.JavascriptLexer,
     "julia"     : pygments.lexers.JuliaLexer,
     "kotlin"    : pygments.lexers.KotlinLexer,
+    "latex"     : pygments.lexers.TexLexer,
     "lisp"      : pygments.lexers.CommonLispLexer,
     "lua"       : pygments.lexers.LuaLexer,
     "mathematica": pygments.lexers.MathematicaLexer,
     "matlab"    : pygments.lexers.MatlabLexer,
     "mongo" :   pygments.lexers.JavascriptLexer,
+    "nim"       : pygments.lexers.NimrodLexer,
     "objective-c": pygments.lexers.ObjectiveCppLexer,
     "ocaml"     : pygments.lexers.OcamlLexer,
     "octave"    : pygments.lexers.OctaveLexer,
@@ -73,6 +76,11 @@ LEXER = {
     "eiffel" :  pygments.lexers.EiffelLexer,
     "clean"  :  pygments.lexers.CleanLexer,
     "dylan" :   pygments.lexers.DylanLexer,
+
+# not languages
+    "cmake"     : pygments.lexers.CMakeLexer,
+    "django"    : pygments.lexers.PythonLexer,
+    "flask"     : pygments.lexers.PythonLexer,
 }
 
 # canonical names are on the right side
@@ -107,7 +115,9 @@ VIM_NAME = {
     'delphi'    :   'pascal',
     'dlang'     :   'd',
     'elisp'     :   'newlisp',
+    'latex'     :   'tex',
     'forth'     :   'fs',
+    'nim'       :   'nimrod',
     'perl6'     :   'perl',
     'python3'   :   'python',
     'python-3.x':   'python',
@@ -115,6 +125,12 @@ VIM_NAME = {
     'solidity'  :   'js',
     'mathematica':  'mma',
     'wolfram-mathematica': 'mma',
+
+    # not languages
+    'cmake'     :   'sh',
+    'git'       :   'sh',
+    'django'    :   'python',
+    'flask'     :   'python',
 }
 
 SO_NAME = {
